@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Sniper Control Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --radius: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  header {
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { font-size: 24px; }
+  .logo-text h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .logo-text p { font-size: 11px; color: var(--muted); }
+
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .status-badge.live { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .status-badge.paused { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .status-badge.loading { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+
+  .container { padding: 16px; max-width: 480px; margin: 0 auto; }
+
+  /* Config source banner */
+  .config-banner {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .config-banner input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-family: monospace;
+  }
+  .config-banner button {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Master switch */
+  .master-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color 0.3s;
+  }
+  .master-card.enabled  { border-color: rgba(16,185,129,0.4); }
+  .master-card.disabled { border-color: rgba(239,68,68,0.4); }
+
+  .master-label { font-size: 13px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  .big-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .big-toggle-text h2 { font-size: 22px; font-weight: 800; }
+  .big-toggle-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .toggle-switch {
+    position: relative;
+    width: 64px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--red);
+    border-radius: 34px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .toggle-slider:before {
+    content: "";
+    position: absolute;
+    width: 26px; height: 26px;
+    left: 4px; bottom: 4px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--green); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(30px); }
+
+  /* Emergency close */
+  .emergency-btn {
+    width: 100%;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.4);
+    border-radius: var(--radius);
+    color: var(--red);
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .emergency-btn:active, .emergency-btn.active {
+    background: rgba(239,68,68,0.25);
+    border-color: var(--red);
+  }
+  .emergency-btn.armed {
+    background: var(--red);
+    color: white;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Settings rows */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 12px;
+  }
+  .setting-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .setting-label { font-size: 13px; flex: 1; }
+  .setting-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .setting-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 14px;
+    width: 90px;
+    text-align: right;
+    -moz-appearance: textfield;
+  }
+  .setting-input::-webkit-outer-spin-button,
+  .setting-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .setting-input:focus { outline: none; border-color: var(--accent); }
+
+  .setting-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    width: 110px;
+  }
+  .setting-select:focus { outline: none; border-color: var(--accent); }
+
+  /* Small toggle */
+  .mini-toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    flex-shrink: 0;
+  }
+  .mini-toggle input { opacity:0; width:0; height:0; }
+  .mini-slider {
+    position: absolute; inset: 0;
+    background: var(--muted);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .mini-slider:before {
+    content: "";
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+  .mini-toggle input:checked + .mini-slider { background: var(--green); }
+  .mini-toggle input:checked + .mini-slider:before { transform: translateX(20px); }
+
+  /* Profit target */
+  .profit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+  }
+  .profit-row .setting-label { flex: 1; }
+
+  /* Save button */
+  .save-btn {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 24px rgba(59,130,246,0.4);
+    transition: all 0.2s;
+    z-index: 200;
+  }
+  .save-btn:active { transform: translateX(-50%) scale(0.98); }
+  .save-btn.saving { background: var(--yellow); color: #000; }
+  .save-btn.saved  { background: var(--green); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 300;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red);   }
+
+  /* Last sync info */
+  .sync-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  .sync-dot.ok  { background: var(--green); }
+  .sync-dot.err { background: var(--red); }
+
+  /* Instructions modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 400;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    max-width: 440px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 15px; margin-bottom: 12px; color: var(--accent); }
+  .modal p, .modal li { font-size: 13px; line-height: 1.7; color: var(--muted); margin-bottom: 8px; }
+  .modal code {
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: var(--accent2);
+    word-break: break-all;
+  }
+  .modal-close {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 12px;
+    margin-top: 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  ol { padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <div class="logo">
+      <span class="logo-icon">🎯</span>
+      <div class="logo-text">
+        <h1>AI SNIPER v11</h1>
+        <p>Remote Control Panel</p>
+      </div>
+    </div>
+    <span class="status-badge loading" id="headerBadge">LOADING</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Config URL -->
+  <div class="config-banner">
+    <span>📁</span>
+    <input type="text" id="configUrl" placeholder="Paste your raw GitHub JSON URL here…">
+    <button onclick="loadConfig()">Load</button>
+  </div>
+
+  <!-- Master Switch -->
+  <div class="master-card" id="masterCard">
+    <div class="master-label">Master Control</div>
+    <div class="big-toggle">
+      <div class="big-toggle-text">
+        <h2 id="masterText">PAUSED</h2>
+        <p id="masterSub">EA will not open new trades</p>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="tradingEnabled" onchange="updateMasterUI()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Emergency Close -->
+  <button class="emergency-btn" id="emergencyBtn" onclick="armEmergency()">
+    ⚠️ CLOSE ALL POSITIONS NOW
+  </button>
+
+  <!-- Engines -->
+  <div class="card">
+    <div class="card-title">⚙️ Active Engines</div>
+    <div class="setting-row">
+      <div><div class="setting-label">MSS Engine</div><div class="setting-sub">Liq sweep → MSS → Zone → Entry</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useMssEngine"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">SMC Engine</div><div class="setting-sub">BOS / CHoCH / OB / FVG</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useSmcEngine"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">PA Engine</div><div class="setting-sub">EMA / RSI / Candle patterns</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="usePaEngine"><span class="mini-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- Risk -->
+  <div class="card">
+    <div class="card-title">💰 Risk Settings</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Risk Per Trade (%)</div></div>
+      <input type="number" class="setting-input" id="riskPercent" step="0.1" min="0.1" max="5">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Max Daily Drawdown (%)</div></div>
+      <input type="number" class="setting-input" id="maxDailyDrawdown" step="0.1" min="0.5" max="10">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Max Spread (pts)</div></div>
+      <input type="number" class="setting-input" id="maxSpreadPoints" step="1" min="5" max="100">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Max Scale (positions)</div></div>
+      <input type="number" class="setting-input" id="maxScale" step="1" min="1" max="5">
+    </div>
+  </div>
+
+  <!-- Profit Target (auto-stop) -->
+  <div class="card">
+    <div class="card-title">🎯 Daily Profit Target</div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Auto-stop at daily profit (%)</div>
+        <div class="setting-sub">Set to 0 to disable. e.g. 2 = stop when up 2% today</div>
+      </div>
+      <input type="number" class="setting-input" id="dailyProfitTarget" step="0.1" min="0" max="20">
+    </div>
+  </div>
+
+  <!-- Trade Style -->
+  <div class="card">
+    <div class="card-title">📊 Trade Style</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Mode</div></div>
+      <select class="setting-select" id="tradeStyle">
+        <option value="SCALP">SCALP</option>
+        <option value="SWING">SWING</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Scalp Quick RR</div></div>
+      <input type="number" class="setting-input" id="scalpQuickRR" step="0.1" min="1" max="5">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Scalp ATR Mult</div></div>
+      <input type="number" class="setting-input" id="scalpATRMult" step="0.1" min="0.3" max="3">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Swing RR</div></div>
+      <input type="number" class="setting-input" id="swingRR" step="0.1" min="1" max="10">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Swing ATR Mult</div></div>
+      <input type="number" class="setting-input" id="swingATRMult" step="0.1" min="0.5" max="5">
+    </div>
+  </div>
+
+  <!-- Session -->
+  <div class="card">
+    <div class="card-title">🕒 Session Hours (SAST)</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Start Hour</div></div>
+      <input type="number" class="setting-input" id="startHourSAST" step="1" min="0" max="23">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">End Hour</div></div>
+      <input type="number" class="setting-input" id="endHourSAST" step="1" min="1" max="24">
+    </div>
+  </div>
+
+  <!-- Trade Management -->
+  <div class="card">
+    <div class="card-title">🛡️ Trade Management</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Trailing Stop</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useTrailingStop"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Trail ATR Multiplier</div></div>
+      <input type="number" class="setting-input" id="trailATRMulti" step="0.1" min="0.5" max="5">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Breakeven</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useBreakeven"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">BE Trigger (×R)</div></div>
+      <input type="number" class="setting-input" id="beTriggerRR" step="0.05" min="0.3" max="2">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">BE Buffer (pts)</div></div>
+      <input type="number" class="setting-input" id="beBufferPoints" step="0.5" min="0" max="20">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Trailing TP</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useTrailingTP"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Trail TP ATR Mult</div></div>
+      <input type="number" class="setting-input" id="trailTPATRMulti" step="0.1" min="0.5" max="5">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Reversal Detector</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="useReversalDetector"><span class="mini-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">RSI Overbought</div></div>
+      <input type="number" class="setting-input" id="revRSIOverbought" step="1" min="60" max="90">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">RSI Oversold</div></div>
+      <input type="number" class="setting-input" id="revRSIOversold" step="1" min="10" max="40">
+    </div>
+  </div>
+
+  <!-- MSS Settings -->
+  <div class="card">
+    <div class="card-title">🔵 MSS Engine Settings</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Lookback Bars</div></div>
+      <input type="number" class="setting-input" id="mssLookbackBars" step="5" min="10" max="100">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Liq Equal Pips</div></div>
+      <input type="number" class="setting-input" id="mssLiqEqualPips" step="0.5" min="1" max="10">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Min Score to Trade</div></div>
+      <input type="number" class="setting-input" id="mssMinScore" step="5" min="25" max="100">
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Require HTF Alignment</div></div>
+      <label class="mini-toggle"><input type="checkbox" id="mssRequireHTFAlign"><span class="mini-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- Sync info -->
+  <div class="sync-row">
+    <span><span class="sync-dot" id="syncDot"></span><span id="syncText">Not connected</span></span>
+    <span id="syncTime"></span>
+  </div>
+
+  <div style="height:8px"></div>
+
+  <!-- Setup button -->
+  <button onclick="document.getElementById('setupModal').classList.add('show')"
+          style="width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);padding:12px;font-size:13px;cursor:pointer;margin-bottom:4px;">
+    📖 Setup Instructions
+  </button>
+
+</div><!-- end container -->
+
+<!-- Sticky save button -->
+<button class="save-btn" id="saveBtn" onclick="saveConfig()">
+  💾 Save &amp; Push to EA
+</button>
+
+<!-- Setup Modal -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal">
+    <h3>⚙️ Setup Instructions</h3>
+    <ol>
+      <li><strong>Create a GitHub account</strong> at github.com if you don't have one.</li>
+      <li><strong>Create a new public repository</strong> called <code>sniper-control</code>.</li>
+      <li><strong>Upload <code>sniper_config.json</code></strong> to the repo root (the file came with this panel).</li>
+      <li>Also <strong>upload <code>index.html</code></strong> (this file) to the same repo.</li>
+      <li>Go to <strong>Settings → Pages</strong>, set source to <em>main branch / root</em>. GitHub will give you a URL like <code>https://yourname.github.io/sniper-control</code> — bookmark this on your phone.</li>
+      <li>Get the <strong>raw URL</strong> of your JSON: open <code>sniper_config.json</code> in GitHub, click <em>Raw</em>, copy the URL. It looks like:<br><code>https://raw.githubusercontent.com/yourname/sniper-control/main/sniper_config.json</code></li>
+      <li>Paste that URL in the box at the top of this panel and tap <strong>Load</strong>.</li>
+      <li>In MetaTrader, add <strong><code>AISniperV11_RemoteControl.mqh</code></strong> to your EA (instructions in that file). Set the <code>RemoteConfigURL</code> input to the same raw URL.</li>
+      <li>When you want to pause the EA, flip the master toggle and tap <strong>Save &amp; Push</strong>. The EA polls every 5 minutes and will stop trading.</li>
+    </ol>
+    <p style="margin-top:12px"><strong>How saving works:</strong> This panel generates the updated JSON and opens GitHub's web editor pre-filled with the new config. Paste it in and commit — no coding needed.</p>
+    <button class="modal-close" onclick="document.getElementById('setupModal').classList.remove('show')">Got it</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let cfg = null;
+let emergencyArmed = false;
+let emergencyTimer = null;
+const STORAGE_KEY = 'sniper_config_url';
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    document.getElementById('configUrl').value = saved;
+    loadConfig();
+  }
+});
+
+// ── Load config from GitHub raw URL ────────────────────────────────
+async function loadConfig() {
+  const url = document.getElementById('configUrl').value.trim();
+  if (!url) { showToast('Paste your raw GitHub JSON URL first', 'error'); return; }
+
+  setBadge('loading', 'LOADING…');
+  try {
+    // Cache-bust so we always get the latest
+    const res = await fetch(url + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    cfg = await res.json();
+    localStorage.setItem(STORAGE_KEY, url);
+    populateUI(cfg);
+    setBadge(cfg.trading_enabled ? 'live' : 'paused', cfg.trading_enabled ? 'LIVE' : 'PAUSED');
+    syncOK('Loaded from GitHub');
+  } catch(e) {
+    setBadge('paused', 'ERROR');
+    syncErr('Load failed: ' + e.message);
+    showToast('Could not load config: ' + e.message, 'error');
+  }
+}
+
+// ── Populate UI from config object ─────────────────────────────────
+function populateUI(c) {
+  setChk('tradingEnabled',      c.trading_enabled);
+  setChk('useMssEngine',        c.use_mss_engine);
+  setChk('useSmcEngine',        c.use_smc_engine);
+  setChk('usePaEngine',         c.use_pa_engine);
+  setChk('useTrailingStop',     c.use_trailing_stop);
+  setChk('useBreakeven',        c.use_breakeven);
+  setChk('useTrailingTP',       c.use_trailing_tp);
+  setChk('useReversalDetector', c.use_reversal_detector);
+  setChk('mssRequireHTFAlign',  c.mss_require_htf_align);
+
+  setVal('riskPercent',         c.risk_percent);
+  setVal('maxDailyDrawdown',    c.max_daily_drawdown);
+  setVal('maxSpreadPoints',     c.max_spread_points);
+  setVal('maxScale',            c.max_scale);
+  setVal('dailyProfitTarget',   c.daily_profit_target_pct);
+  setVal('scalpQuickRR',        c.scalp_quick_rr);
+  setVal('scalpATRMult',        c.scalp_atr_mult);
+  setVal('swingRR',             c.swing_rr);
+  setVal('swingATRMult',        c.swing_atr_mult);
+  setVal('startHourSAST',       c.start_hour_sast);
+  setVal('endHourSAST',         c.end_hour_sast);
+  setVal('trailATRMulti',       c.trail_atr_multi);
+  setVal('beTriggerRR',         c.be_trigger_rr);
+  setVal('beBufferPoints',      c.be_buffer_points);
+  setVal('trailTPATRMulti',     c.trail_tp_atr_multi);
+  setVal('revRSIOverbought',    c.rev_rsi_overbought);
+  setVal('revRSIOversold',      c.rev_rsi_oversold);
+  setVal('mssLookbackBars',     c.mss_lookback_bars);
+  setVal('mssLiqEqualPips',     c.mss_liq_equal_pips);
+  setVal('mssMinScore',         c.mss_min_score);
+
+  document.getElementById('tradeStyle').value = c.trade_style || 'SCALP';
+
+  // Reset emergency close button if config says false
+  if (!c.close_all_now) {
+    document.getElementById('emergencyBtn').classList.remove('armed');
+    emergencyArmed = false;
+  }
+
+  updateMasterUI();
+}
+
+// ── Build config object from UI ─────────────────────────────────────
+function buildConfig() {
+  return {
+    trading_enabled:       getChk('tradingEnabled'),
+    comment:               "Set trading_enabled to false to pause the EA remotely",
+    risk_percent:          getNum('riskPercent'),
+    max_daily_drawdown:    getNum('maxDailyDrawdown'),
+    max_spread_points:     getNum('maxSpreadPoints'),
+    max_scale:             getInt('maxScale'),
+    use_mss_engine:        getChk('useMssEngine'),
+    use_smc_engine:        getChk('useSmcEngine'),
+    use_pa_engine:         getChk('usePaEngine'),
+    trade_style:           document.getElementById('tradeStyle').value,
+    scalp_quick_rr:        getNum('scalpQuickRR'),
+    scalp_atr_mult:        getNum('scalpATRMult'),
+    scalp_max_candles:     cfg ? cfg.scalp_max_candles : 5,
+    swing_rr:              getNum('swingRR'),
+    swing_atr_mult:        getNum('swingATRMult'),
+    start_hour_sast:       getInt('startHourSAST'),
+    end_hour_sast:         getInt('endHourSAST'),
+    use_trailing_stop:     getChk('useTrailingStop'),
+    trail_atr_multi:       getNum('trailATRMulti'),
+    use_breakeven:         getChk('useBreakeven'),
+    be_trigger_rr:         getNum('beTriggerRR'),
+    be_buffer_points:      getNum('beBufferPoints'),
+    use_trailing_tp:       getChk('useTrailingTP'),
+    trail_tp_atr_multi:    getNum('trailTPATRMulti'),
+    use_reversal_detector: getChk('useReversalDetector'),
+    rev_rsi_overbought:    getInt('revRSIOverbought'),
+    rev_rsi_oversold:      getInt('revRSIOversold'),
+    mss_lookback_bars:     getInt('mssLookbackBars'),
+    mss_liq_equal_pips:    getNum('mssLiqEqualPips'),
+    mss_min_score:         getInt('mssMinScore'),
+    mss_require_htf_align: getChk('mssRequireHTFAlign'),
+    close_all_now:         emergencyArmed,
+    comment_close:         "Set close_all_now to true to emergency close all positions",
+    daily_profit_target_pct: getNum('dailyProfitTarget'),
+    comment_target:        "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
+    last_updated:          new Date().toISOString(),
+    updated_by:            "web_panel"
+  };
+}
+
+// ── Save: generates JSON and opens GitHub editor ────────────────────
+function saveConfig() {
+  const btn = document.getElementById('saveBtn');
+  const newCfg = buildConfig();
+  const json = JSON.stringify(newCfg, null, 2);
+
+  // Copy JSON to clipboard
+  navigator.clipboard.writeText(json).then(() => {
+    btn.textContent = '✅ Copied! Opening GitHub…';
+    btn.classList.add('saved');
+    showToast('JSON copied — paste it in GitHub editor', 'success');
+  }).catch(() => {
+    // Fallback: show in textarea
+    btn.textContent = '📋 Copy the JSON below';
+  });
+
+  // Open GitHub file editor
+  const url = document.getElementById('configUrl').value.trim();
+  if (url) {
+    // Convert raw URL to edit URL
+    const editUrl = url
+      .replace('raw.githubusercontent.com', 'github.com')
+      .replace('/main/', '/edit/main/');
+    setTimeout(() => { window.open(editUrl, '_blank'); }, 800);
+  } else {
+    showToast('Set your config URL first so we can open the right file', 'error');
+  }
+
+  setTimeout(() => {
+    btn.textContent = '💾 Save & Push to EA';
+    btn.classList.remove('saved', 'saving');
+  }, 4000);
+}
+
+// ── Emergency close ────────────────────────────────────────────────
+function armEmergency() {
+  const btn = document.getElementById('emergencyBtn');
+  if (!emergencyArmed) {
+    emergencyArmed = true;
+    btn.textContent = '🔴 TAP AGAIN TO CONFIRM — WILL CLOSE ALL TRADES';
+    btn.classList.add('armed');
+    emergencyTimer = setTimeout(() => {
+      emergencyArmed = false;
+      btn.textContent = '⚠️ CLOSE ALL POSITIONS NOW';
+      btn.classList.remove('armed');
+    }, 5000);
+  } else {
+    clearTimeout(emergencyTimer);
+    btn.textContent = '✅ ARMED — TAP SAVE TO EXECUTE';
+    showToast('Emergency close armed. Tap Save & Push to execute.', 'error');
+  }
+}
+
+// ── Master UI sync ─────────────────────────────────────────────────
+function updateMasterUI() {
+  const enabled = document.getElementById('tradingEnabled').checked;
+  const card    = document.getElementById('masterCard');
+  const text    = document.getElementById('masterText');
+  const sub     = document.getElementById('masterSub');
+  const badge   = document.getElementById('headerBadge');
+
+  if (enabled) {
+    card.className = 'master-card enabled';
+    text.textContent = 'TRADING LIVE';
+    sub.textContent  = 'EA is active and looking for setups';
+    badge.className  = 'status-badge live';
+    badge.textContent = 'LIVE';
+  } else {
+    card.className = 'master-card disabled';
+    text.textContent = 'PAUSED';
+    sub.textContent  = 'EA will not open new trades';
+    badge.className  = 'status-badge paused';
+    badge.textContent = 'PAUSED';
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function setChk(id, v) { const el = document.getElementById(id); if(el) el.checked = !!v; }
+function setVal(id, v) { const el = document.getElementById(id); if(el) el.value = v ?? ''; }
+function getChk(id) { return document.getElementById(id)?.checked ?? false; }
+function getNum(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+function getInt(id) { return parseInt(document.getElementById(id)?.value)  || 0; }
+
+function setBadge(type, text) {
+  const b = document.getElementById('headerBadge');
+  b.className = 'status-badge ' + type;
+  b.textContent = text;
+}
+
+function syncOK(msg) {
+  document.getElementById('syncDot').className  = 'sync-dot ok';
+  document.getElementById('syncText').textContent = msg;
+  document.getElementById('syncTime').textContent = new Date().toLocaleTimeString();
+}
+function syncErr(msg) {
+  document.getElementById('syncDot').className  = 'sync-dot err';
+  document.getElementById('syncText').textContent = msg;
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "trading_enabled": true,
+  "comment": "Set trading_enabled to false to pause the EA remotely",
+
+  "risk_percent": 1.0,
+  "max_daily_drawdown": 3.0,
+  "max_spread_points": 20.0,
+  "max_scale": 2,
+
+  "use_mss_engine": true,
+  "use_smc_engine": true,
+  "use_pa_engine": true,
+
+  "trade_style": "SCALP",
+  "scalp_quick_rr": 1.5,
+  "scalp_atr_mult": 0.8,
+  "scalp_max_candles": 5,
+
+  "swing_rr": 3.0,
+  "swing_atr_mult": 1.5,
+
+  "start_hour_sast": 10,
+  "end_hour_sast": 23,
+
+  "use_trailing_stop": true,
+  "trail_atr_multi": 1.5,
+  "use_breakeven": true,
+  "be_trigger_rr": 0.75,
+  "be_buffer_points": 3.0,
+  "use_trailing_tp": true,
+  "trail_tp_atr_multi": 2.0,
+
+  "use_reversal_detector": true,
+  "rev_rsi_overbought": 75,
+  "rev_rsi_oversold": 25,
+
+  "mss_lookback_bars": 40,
+  "mss_liq_equal_pips": 3.0,
+  "mss_min_score": 65,
+  "mss_require_htf_align": false,
+
+  "close_all_now": false,
+  "comment_close": "Set close_all_now to true to emergency close all positions",
+
+  "daily_profit_target_pct": 0.0,
+  "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that % (e.g. 2.0 = stop at 2%)",
+
+  "last_updated": "2025-01-01T00:00:00Z",
+  "updated_by": "web_panel"
+}
