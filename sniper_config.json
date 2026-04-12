@@ -2,7 +2,7 @@
   "trading_enabled": true,
   "comment": "Set trading_enabled to false to pause the EA remotely",
   "risk_percent": 1,
-  "max_daily_drawdown": 3,
+  "max_daily_drawdown": 100,
   "max_spread_points": 200000,
   "max_scale": 2,
   "use_mss_engine": true,
@@ -34,6 +34,6 @@
   "comment_close": "Set close_all_now to true to emergency close all positions",
   "daily_profit_target_pct": 50,
   "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
-  "last_updated": "2026-04-12T02:20:22.866Z",
+  "last_updated": "2026-04-12T02:35:45.843Z",
   "updated_by": "web_panel"
 }
