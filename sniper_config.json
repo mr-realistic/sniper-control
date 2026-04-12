@@ -1,7 +1,7 @@
 {
   "trading_enabled": true,
   "comment": "Set trading_enabled to false to pause the EA remotely",
-  "risk_percent": 1,
+  "risk_percent": 0,
   "max_daily_drawdown": 3,
   "max_spread_points": 200000,
   "max_scale": 2,
@@ -9,7 +9,7 @@
   "use_smc_engine": true,
   "use_pa_engine": true,
   "trade_style": "SCALP",
-  "scalp_quick_rr": 1.5,
+  "scalp_quick_rr": 3,
   "scalp_atr_mult": 0.8,
   "scalp_max_candles": 5,
   "swing_rr": 3,
@@ -26,7 +26,7 @@
   "use_reversal_detector": true,
   "rev_rsi_overbought": 75,
   "rev_rsi_oversold": 25,
-  "mss_lookback_bars": 40,
+  "mss_lookback_bars": 500,
   "mss_liq_equal_pips": 3,
   "mss_min_score": 65,
   "mss_require_htf_align": false,
@@ -34,6 +34,6 @@
   "comment_close": "Set close_all_now to true to emergency close all positions",
   "daily_profit_target_pct": 50,
   "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
-  "last_updated": "2026-04-12T02:11:02.364Z",
+  "last_updated": "2026-04-12T02:14:08.493Z",
   "updated_by": "web_panel"
 }
