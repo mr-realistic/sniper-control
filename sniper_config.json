@@ -30,10 +30,10 @@
   "mss_liq_equal_pips": 3,
   "mss_min_score": 65,
   "mss_require_htf_align": false,
-  "close_all_now": false,
+  "close_all_now": true,
   "comment_close": "Set close_all_now to true to emergency close all positions",
   "daily_profit_target_pct": 50,
   "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
-  "last_updated": "2026-04-13T02:12:01.765Z",
+  "last_updated": "2026-04-13T13:40:23.526Z",
   "updated_by": "web_panel"
 }
