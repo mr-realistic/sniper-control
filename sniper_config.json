@@ -7,7 +7,7 @@
   "max_scale": 2,
   "use_mss_engine": true,
   "use_smc_engine": true,
-  "use_pa_engine": false,
+  "use_pa_engine": true,
   "use_sr_engine": true,
   "use_pattern_engine": true,
   "use_fib_engine": true,
@@ -46,6 +46,6 @@
   "comment_close": "Set close_all_now to true to emergency close all positions",
   "daily_profit_target_pct": 50,
   "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
-  "last_updated": "2026-04-15T09:23:18.432Z",
+  "last_updated": "2026-04-18T15:48:03.136Z",
   "updated_by": "web_panel_v12"
 }
