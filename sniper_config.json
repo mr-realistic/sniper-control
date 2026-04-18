@@ -46,6 +46,6 @@
   "comment_close": "Set close_all_now to true to emergency close all positions",
   "daily_profit_target_pct": 50,
   "comment_target": "Set daily_profit_target_pct > 0 to auto-stop when daily profit hits that %",
-  "last_updated": "2026-04-18T16:04:14.183Z",
+  "last_updated": "2026-04-18T18:55:09.809Z",
   "updated_by": "web_panel_v12"
 }
